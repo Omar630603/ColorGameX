@@ -20,10 +20,18 @@ import java.util.concurrent.TimeUnit;
 
 public class MyActivity extends AppCompatActivity {
 
-    TextView timer, clrText, scoreText;
+    TextView timer;
+    TextView clrText;
+    TextView scoreText;
     EditText passwd;
-    Button submit, start;
-    ViewGroup accessbox, colorbox, buttonbox1, buttonbox2, scorebox, progressbox;
+    Button submit;
+    Button start;
+    ViewGroup accessbox;
+    ViewGroup colorbox;
+    ViewGroup buttonbox1;
+    ViewGroup buttonbox2;
+    ViewGroup scorebox;
+    ViewGroup progressbox;
     ProgressBar progress;
     Switch isMinus;
     CountDownTimer countDown;
@@ -36,28 +44,29 @@ public class MyActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_layout);
-        timer = (TextView) findViewById(R.id.timerText);
-        clrText = (TextView) findViewById(R.id.clrText);
-        scoreText = (TextView) findViewById(R.id.scoreText);
-        passwd = (EditText) findViewById(R.id.appCode);
-        submit = (Button) findViewById(R.id.submitBtn);
-        start = (Button) findViewById(R.id.startBtn);
-        accessbox = (ViewGroup) findViewById(R.id.accessBox);
-        colorbox = (ViewGroup) findViewById(R.id.colorBox);
-        buttonbox1 = (ViewGroup) findViewById(R.id.buttonBox1);
-        buttonbox2 = (ViewGroup) findViewById(R.id.buttonBox2);
-        scorebox = (ViewGroup) findViewById(R.id.scoreBox);
-        progressbox = (ViewGroup) findViewById(R.id.progressBox);
-        progress = (ProgressBar) findViewById(R.id.progressScore);
-        isMinus = (Switch) findViewById(R.id.isMinus);
+
+        timer = findViewById(R.id.timerText);
+        clrText = findViewById(R.id.clrText);
+        scoreText = findViewById(R.id.scoreText);
+        passwd = findViewById(R.id.appCode);
+        submit = findViewById(R.id.submitBtn);
+        start = findViewById(R.id.startBtn);
+        accessbox = findViewById(R.id.accessBox);
+        colorbox = findViewById(R.id.colorBox);
+        buttonbox1 = findViewById(R.id.buttonBox1);
+        buttonbox2 = findViewById(R.id.buttonBox2);
+        scorebox = findViewById(R.id.scoreBox);
+        progressbox = findViewById(R.id.progressBox);
+        progress = findViewById(R.id.progressScore);
+        isMinus = findViewById(R.id.isMinus);
 
         initTimer();
         initColorList();
     }
     public void openGame(View v) {
-        if (!passwd.getText().toString().equals(getString(R.string.keyword))){
-            Toast.makeText(getApplicationContext(),"Password is wrong", Toast.LENGTH_LONG).show();
-        }else if(passwd.getText().toString().equals(getString(R.string.keyword))){
+        String keyword = getString(R.string.keyword);
+        String pass = passwd.getText().toString();
+        if (keyword.equals(pass)) {
             passwd.setVisibility(View.INVISIBLE);
             submit.setVisibility(View.INVISIBLE);
             accessbox.setVisibility(View.VISIBLE);
@@ -67,59 +76,103 @@ public class MyActivity extends AppCompatActivity {
             scorebox.setVisibility(View.VISIBLE);
             progressbox.setVisibility(View.VISIBLE);
             Toast.makeText(getApplicationContext(), "Login Success", Toast.LENGTH_LONG).show();
+        } else {
+            passwd.setVisibility(View.VISIBLE);
+            submit.setVisibility(View.VISIBLE);
+            accessbox.setVisibility(View.VISIBLE);
+            colorbox.setVisibility(View.INVISIBLE);
+            buttonbox1.setVisibility(View.INVISIBLE);
+            buttonbox2.setVisibility(View.INVISIBLE);
+            scorebox.setVisibility(View.INVISIBLE);
+            progressbox.setVisibility(View.INVISIBLE);
+            Toast.makeText(getApplicationContext(), "Password is wrong", Toast.LENGTH_LONG).show();
         }
     }
     public void startGame(View v) {
-        if (!isStarted){
+        if (!isStarted) {
             progress.setProgress(0);
             scoreText.setText("0");
-            clrText.setText("");
             start.setVisibility(View.INVISIBLE);
-            isStarted=true;
+            isStarted = true;
             newGameStage();
         }
     }
     public void submitColor(View v) {
+        if(isStarted){
+            String charCode = ((Button)v).getText().toString();
+            if (charCode.equals(charList.get(clrText.getText().toString()))) {
+                correctSubmit();
+            } else {
+                wrongSubmit();
+            }
+        }
     }
-    private void initTimer(){
-        int millisInFuture = getResources().getInteger(R.integer.maxtimer)*1000;
-        int countDownInterval = 1;
-        countDown = new CountDownTimer(millisInFuture, countDownInterval) {
+
+    private void initTimer() {
+        countDown = new CountDownTimer(getResources().getInteger(R.integer.maxtimer)*1000, 1) {
             @Override
             public void onTick(long millisUntilFinished) {
-                timer.setText(""+String.format(FORMAT, TimeUnit.MILLISECONDS.toSeconds(millisUntilFinished) - TimeUnit.MINUTES.toSeconds( TimeUnit.MILLISECONDS.toMinutes( millisUntilFinished)), TimeUnit.MILLISECONDS.toMillis(millisUntilFinished) - TimeUnit.SECONDS.toMillis( TimeUnit.MILLISECONDS.toSeconds(millisUntilFinished))));
+                timer.setText("" + String.format(FORMAT, TimeUnit.MILLISECONDS.toSeconds(millisUntilFinished) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millisUntilFinished)), TimeUnit.MILLISECONDS.toMillis(millisUntilFinished) - TimeUnit.SECONDS.toMillis(TimeUnit.MILLISECONDS.toSeconds(millisUntilFinished))));
             }
+
             @Override
             public void onFinish() {
-
+                wrongSubmit();
             }
         };
     }
-    private void initColorList(){
+
+    private void initColorList() {
         clrList = getResources().getStringArray(R.array.colorList);
         String[] temp = getResources().getStringArray(R.array.charList);
-        for (int i = 0; i < clrList.length; i++){
+
+        for (int i=0; i<clrList.length; i++) {
             charList.put(clrList[i],temp[i]);
         }
-        if(isStarted){
-            String clrTxt = ((TextView)findViewById(R.id.clrText)).getText().toString();
-            int lastNum = Arrays.asList(clrList).indexOf(clrTxt);
-            int colorIdx = getNewRandomInt(0,5,lastNum);
-            clrText.setText(clrList[colorIdx]);
-            countDown.start();
-        }
     }
-    int getNewRandomInt(int min, int max, int except){
+
+    int getNewRandomInt(int min, int max, int except) {
         Random r = new Random();
         boolean found = false;
         int number;
-        do{
-            number = r.ints(min, (max+1)).findFirst().getAsInt();
-            if (number != except) found = true;
-        }while (!found);
+        do {
+            number = r.ints(min, (max + 1)).findFirst().getAsInt();
+            if (number!=except) found=true;
+        } while (!found);
         return number;
     }
-    private void newGameStage(){
-        initColorList();
+
+    private void newGameStage() {
+        String clrTxt = ((TextView) findViewById(R.id.clrText)).getText().toString();
+        int lastNum = Arrays.asList(clrList).indexOf(clrTxt);
+        int colorIdx = getNewRandomInt(0, 5, lastNum);
+        clrText.setText(clrList[colorIdx]);
+        countDown.start();
     }
+
+    private void updateScore(int score) {
+        progress.setProgress(score);
+        scoreText.setText(Integer.toString(score));
+    }
+
+    private void correctSubmit() {
+        int newScore = progress.getProgress()+getResources().getInteger(R.integer.counter);
+        updateScore(newScore);
+        if(progress.getProgress()==getResources().getInteger(R.integer.maxScore)){
+            countDown.cancel();
+            timer.setText("COMPLETE");
+            isStarted=false;
+            start.setVisibility(View.VISIBLE);
+        }else{
+            newGameStage();
+        }
+    }
+
+    private void wrongSubmit() {
+        if (isMinus.isChecked() && progress.getProgress()>0) {
+            updateScore(progress.getProgress()-getResources().getInteger(R.integer.counter));
+        }
+        newGameStage();
+    }
+
 }
