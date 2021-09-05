@@ -3,6 +3,7 @@ package org.aplas.colorgamex;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -12,6 +13,8 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.concurrent.TimeUnit;
+
 public class MyActivity extends AppCompatActivity {
 
     TextView timer, clrText, scoreText;
@@ -20,6 +23,8 @@ public class MyActivity extends AppCompatActivity {
     ViewGroup accessbox, colorbox, buttonbox1, buttonbox2, scorebox, progressbox;
     ProgressBar progress;
     Switch isMinus;
+    CountDownTimer countDown;
+    final String FORMAT = "%d:%d";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +44,8 @@ public class MyActivity extends AppCompatActivity {
         progressbox = (ViewGroup) findViewById(R.id.progressBox);
         progress = (ProgressBar) findViewById(R.id.progressScore);
         isMinus = (Switch) findViewById(R.id.isMinus);
+
+        initTimer();
     }
     public void openGame(View v) {
         if (!passwd.getText().toString().equals(getString(R.string.keyword))){
@@ -58,5 +65,19 @@ public class MyActivity extends AppCompatActivity {
     public void startGame(View v) {
     }
     public void submitColor(View v) {
+    }
+    private void initTimer(){
+        int millisInFuture = getResources().getInteger(R.integer.maxtimer)*1000;
+        int countDownInterval = 1;
+        countDown = new CountDownTimer(millisInFuture, countDownInterval) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                timer.setText(""+String.format(FORMAT, TimeUnit.MILLISECONDS.toSeconds(millisUntilFinished) - TimeUnit.MINUTES.toSeconds( TimeUnit.MILLISECONDS.toMinutes( millisUntilFinished)), TimeUnit.MILLISECONDS.toMillis(millisUntilFinished) - TimeUnit.SECONDS.toMillis( TimeUnit.MILLISECONDS.toSeconds(millisUntilFinished))));
+            }
+            @Override
+            public void onFinish() {
+
+            }
+        };
     }
 }
